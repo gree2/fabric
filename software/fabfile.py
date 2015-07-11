@@ -21,7 +21,8 @@ VER_PHOENIX = '4.3.1'
 VER_PIG = '0.15.0'
 VER_SOLR = '5.2.0'
 VER_SPARK = '1.4.0'
-VER_SQOOP = '1.99.6'
+VER_SQOOP1 = '1.4.6'
+VER_SQOOP2 = '1.99.6'
 VER_STORM = '0.9.5'
 VER_TEZ = '0.7.0'
 VER_ZOOKEEPER = '3.4.6'
@@ -38,7 +39,8 @@ PATH_PHOENIX = 'phoenix/phoenix-{0}/bin/phoenix-{0}-bin.tar.gz'
 PATH_PIG = 'pig/pig-{0}/pig-{0}.tar.gz'
 PATH_SOLR = 'lucene/solr/{0}/solr-{0}.tgz'
 PATH_SPARK = 'spark/spark-{0}/spark-{0}.tgz'
-PATH_SQOOP = 'sqoop/{0}/sqoop-{0}-bin-hadoop200.tar.gz'
+PATH_SQOOP1 = 'sqoop/{0}/sqoop-{0}.bin__hadoop-2.0.4-alpha.tar.gz'
+PATH_SQOOP2 = 'sqoop/{0}/sqoop-{0}-bin-hadoop200.tar.gz'
 PATH_STORM = 'storm/apache-storm-{0}/apache-storm-{0}.tar.gz'
 PATH_TEZ = 'tez/{0}/apache-tez-{0}-src.tar.gz'
 PATH_ZOOKEEPER = 'zookeeper/zookeeper-{0}/zookeeper-{0}.tar.gz'
@@ -91,9 +93,13 @@ def get11(version=VER_SPARK, prefix=WORKING_DIR):
     """get spark       => fab get11:1.4.0,prefix"""
     run(CMD.format(MIRROR, PATH_SPARK.format(version), prefix))
 
-def get12(version=VER_SQOOP, prefix=WORKING_DIR):
-    """get sqoop       => fab get12:1.99.6,prefix"""
-    run(CMD.format(MIRROR, PATH_SQOOP.format(version), prefix))
+def get121(version=VER_SQOOP1, prefix=WORKING_DIR):
+    """get sqoop       => fab get121:1.4.6,prefix"""
+    run(CMD.format(MIRROR, PATH_SQOOP1.format(version), prefix))
+
+def get122(version=VER_SQOOP2, prefix=WORKING_DIR):
+    """get sqoop       => fab get122:1.99.6,prefix"""
+    run(CMD.format(MIRROR, PATH_SQOOP2.format(version), prefix))
 
 def get13(version=VER_STORM, prefix=WORKING_DIR):
     """get storm       => fab get13:0.9.5,prefix"""
