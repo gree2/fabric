@@ -8,7 +8,7 @@ import os
 APP_HOME = '/app/hadoop'
 DEPLOY_HOME = '/opt/bigdata'
 CONF_HOME = '~/Documents/github/fabric/cluster'
-SOFTWARE_HOME = '~/Documents/github/fabric/software'
+SOFTWARE_HOME = '~/Downloads'
 
 # zookeeper
 ZOOKEEPER_CFG = 'zoo.cfg'
