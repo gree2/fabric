@@ -45,6 +45,22 @@ PATH_STORM = 'storm/apache-storm-{0}/apache-storm-{0}.tar.gz'
 PATH_TEZ = 'tez/{0}/apache-tez-{0}-src.tar.gz'
 PATH_ZOOKEEPER = 'zookeeper/zookeeper-{0}/zookeeper-{0}.tar.gz'
 
+# CONNECTOR_MY = "curl -L \
+# 'http://www.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.35.tar.gz/from/http://mysql.he.net/' \
+# > {0}/mysql-connector-java-5.1.35.tar.gz"
+
+# CONNECTOR_MS = "curl -L \
+# 'http://download.microsoft.com/download/0/2/A/02AAE597-3865-456C-AE7F-613F99F850A8/sqljdbc_4.0.2206.100_enu.tar.gz' \
+# > {0}/sqljdbc_4.0.2206.100_enu.tar.gz"
+
+CONNECTOR_MY = "curl -L \
+'http://www.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.35.tar.gz/from/http://mysql.he.net/' \
+| tar xz -C {0}"
+
+CONNECTOR_MS = "curl -L \
+'http://download.microsoft.com/download/0/2/A/02AAE597-3865-456C-AE7F-613F99F850A8/sqljdbc_4.0.2206.100_enu.tar.gz' \
+| tar xz -C {0}"
+
 def get00(version=VER_ACCUMULO, prefix=WORKING_DIR):
     """get accumulo    => fab get00:1.7.0,prefix"""
     run(CMD.format(MIRROR, PATH_ACCUMULO.format(version), prefix))
@@ -92,6 +108,11 @@ def get10(version=VER_SOLR, prefix=WORKING_DIR):
 def get11(version=VER_SPARK, prefix=WORKING_DIR):
     """get spark       => fab get11:1.4.0,prefix"""
     run(CMD.format(MIRROR, PATH_SPARK.format(version), prefix))
+
+def get120():
+    """get connector   => fab get120"""
+    run(CONNECTOR_MS.format(WORKING_DIR))
+    run(CONNECTOR_MY.format(WORKING_DIR))
 
 def get121(version=VER_SQOOP1, prefix=WORKING_DIR):
     """get sqoop       => fab get121:1.4.6,prefix"""

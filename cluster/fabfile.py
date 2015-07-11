@@ -23,7 +23,8 @@ HBASE_MASTER = 'node5'
 HBASE_PKG = 'hbase-1.0.1.1-bin.tar.gz'
 
 # sqoop
-SQOOP_PKG = 'sqoop-1.99.6-bin-hadoop200.tar.gz'
+SQOOP1_PKG = 'sqoop-1.4.6.bin__hadoop-2.0.4-alpha.tar.gz'
+SQOOP2_PKG = 'sqoop-1.99.6-bin-hadoop200.tar.gz'
 SQOOP_LIB_MYSQL = 'mysql-connector-java-5.1.35-bin.jar'
 SQOOP_LIB_MSSQL = 'sqljdbc4.jar'
 
@@ -107,6 +108,7 @@ def hb1():
 def hb2():
     """hbase config        => fab seth:2,5 hb2"""
 
+    # 4. copy cfg
     file_i1 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_BM)
     file_o1 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_BM)
     file_i2 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_ENV)
@@ -115,28 +117,10 @@ def hb2():
     file_o3 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_RS)
     file_i4 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_SITE)
     file_o4 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_SITE)
-
-    # 4. copy cfg
-    with settings(host_string='node5'):
-        put(file_i2, file_o2)
-        put(file_i3, file_o3)
-        put(file_i4, file_o4)
-
-    with settings(host_string='node4'):
-        put(file_i2, file_o2)
-        put(file_i3, file_o3)
-        put(file_i4, file_o4)
-
-    with settings(host_string='node3'):
-        put(file_i2, file_o2)
-        put(file_i3, file_o3)
-        put(file_i4, file_o4)
-
-    with settings(host_string='node2'):
-        put(file_i1, file_o1)
-        put(file_i2, file_o2)
-        put(file_i3, file_o3)
-        put(file_i4, file_o4)
+    put(file_i1, file_o1)
+    put(file_i2, file_o2)
+    put(file_i3, file_o3)
+    put(file_i4, file_o4)
 
 def hb3(option):
     """hbase server        => fab seth:5,5 hb3:start/stop"""
@@ -144,21 +128,55 @@ def hb3(option):
         file_i = os.path.join(DEPLOY_HOME, 'hbase/bin/')
         run('{0}{1}-hbase.sh'.format(file_i, option))
 
-def sq0():
-    """sqoop uninstall     => fab seth:2,3 sq0"""
+def sq10():
+    """sqoop1 uninstall    => fab seth:3,3 sq10"""
     # 0. rm sqoop
     file_i = os.path.join(DEPLOY_HOME, 'sqoop')
     run('rm -rf {0}'.format(file_i))
 
-def sq1():
-    """sqoop install       => fab seth:2,3 sq1"""
+def sq11():
+    """sqoop1 install      => fab seth:3,3 sq11"""
     # 1. copy package
-    file_i = os.path.join(SOFTWARE_HOME, SQOOP_PKG)
-    file_o = os.path.join(DEPLOY_HOME, SQOOP_PKG)
+    file_i = os.path.join(SOFTWARE_HOME, SQOOP1_PKG)
+    file_o = os.path.join(DEPLOY_HOME, SQOOP1_PKG)
     put(file_i, file_o)
 
     # 2. unzip
-    file_i = os.path.join(DEPLOY_HOME, SQOOP_PKG)
+    file_i = os.path.join(DEPLOY_HOME, SQOOP1_PKG)
+    run('tar -zxf {0} -C {1}'.format(file_i, DEPLOY_HOME))
+
+    # 3. rename
+    file_i = os.path.join(DEPLOY_HOME, 'sqoop-1.4.6.bin__hadoop-2.0.4-alpha')
+    file_o = os.path.join(DEPLOY_HOME, 'sqoop')
+    run('mv {0} {1}'.format(file_i, file_o))
+
+    # 4. install dependencies - jar
+    file_i = os.path.join(SOFTWARE_HOME, 'sqljdbc_4.0/enu', SQOOP_LIB_MSSQL)
+    file_o = os.path.join(DEPLOY_HOME, 'sqoop/lib', SQOOP_LIB_MSSQL)
+    put(file_i, file_o)
+    file_i = os.path.join(SOFTWARE_HOME, 'mysql-connector-java-5.1.35', SQOOP_LIB_MYSQL)
+    file_o = os.path.join(DEPLOY_HOME, 'sqoop/lib', SQOOP_LIB_MYSQL)
+    put(file_i, file_o)
+
+    # 5. clean up
+    file_i = os.path.join(DEPLOY_HOME, SQOOP1_PKG)
+    run('rm {0}'.format(file_i))
+
+def sq20():
+    """sqoop2 uninstall    => fab seth:2,3 sq20"""
+    # 0. rm sqoop
+    file_i = os.path.join(DEPLOY_HOME, 'sqoop')
+    run('rm -rf {0}'.format(file_i))
+
+def sq21():
+    """sqoop2 install      => fab seth:2,3 sq21"""
+    # 1. copy package
+    file_i = os.path.join(SOFTWARE_HOME, SQOOP2_PKG)
+    file_o = os.path.join(DEPLOY_HOME, SQOOP2_PKG)
+    put(file_i, file_o)
+
+    # 2. unzip
+    file_i = os.path.join(DEPLOY_HOME, SQOOP2_PKG)
     run('tar -zxf {0} -C {1}'.format(file_i, DEPLOY_HOME))
 
     # 3. rename
@@ -167,13 +185,13 @@ def sq1():
     run('mv {0} {1}'.format(file_i, file_o))
 
     # 4. install dependencies - jar
-    # ./bin/addtowar.sh -jars /path/to/jar/mysql-connector-java-*-bin.jar
-    file_i = os.path.join(SOFTWARE_HOME, SQOOP_LIB_MSSQL)
+    file_i = os.path.join(SOFTWARE_HOME, 'sqljdbc_4.0/enu', SQOOP_LIB_MSSQL)
     file_o = os.path.join(DEPLOY_HOME, 'sqoop/server/lib', SQOOP_LIB_MSSQL)
     put(file_i, file_o)
-    file_i = os.path.join(SOFTWARE_HOME, SQOOP_LIB_MYSQL)
+    file_i = os.path.join(SOFTWARE_HOME, 'mysql-connector-java-5.1.35', SQOOP_LIB_MYSQL)
     file_o = os.path.join(DEPLOY_HOME, 'sqoop/server/lib', SQOOP_LIB_MYSQL)
     put(file_i, file_o)
+
     # 4. install dependencies - lib
     file_i = os.path.join(DEPLOY_HOME, 'sqoop/server/conf/catalina.properties')
     # common
@@ -212,11 +230,11 @@ def sq1():
     run("sed 's@{0}@{1}@' -i {2}".format(replace_i, replace_o, file_i))
 
     # 5. clean up
-    file_i = os.path.join(DEPLOY_HOME, SQOOP_PKG)
+    file_i = os.path.join(DEPLOY_HOME, SQOOP2_PKG)
     run('rm {0}'.format(file_i))
 
-def sq2(option):
-    """sqoop server        => fab seth:2,3 sq1:strat/stop"""
+def sq22(option):
+    """sqoop2 server       => fab seth:2,3 sq22:strat/stop"""
     file_i = os.path.join(DEPLOY_HOME, 'sqoop/bin/sqoop2-server')
     run('{0} {1}'.format(file_i, option))
 
