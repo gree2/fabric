@@ -5,20 +5,31 @@ from fabric.api import env, settings
 from fabric.operations import run, put
 import os
 
-APP_HOME = '/app/hadoop'
+APP_HOME = '/app'
 DEPLOY_HOME = '/opt/bigdata'
 CONF_HOME = '~/Documents/github/fabric/cluster'
 SOFTWARE_HOME = '~/Downloads'
+
+# hadoop
+HADOOP_CFGS = [
+    'core-site.xml',
+    'hdfs-site.xml',
+    'mapred-site.xml',
+    'slaves',
+    'yarn-site.xml']
+HADOOP_NN = 'node5'
+HADOOP_PKG = 'hadoop-2.7.0.tar.gz'
 
 # zookeeper
 ZOOKEEPER_CFG = 'zoo.cfg'
 ZOOKEEPER_PKG = 'zookeeper-3.4.6.tar.gz'
 
 # hbase
-HBASE_CFG_BM = 'backup-masters'
-HBASE_CFG_ENV = 'hbase-env.sh'
-HBASE_CFG_RS = 'regionservers'
-HBASE_CFG_SITE = 'hbase-site.xml'
+HBASE_CFGS = [
+    'backup-masters',
+    'hbase-env.sh',
+    'regionservers',
+    'hbase-site.xml']
 HBASE_MASTER = 'node5'
 HBASE_PKG = 'hbase-1.0.1.1-bin.tar.gz'
 
@@ -39,6 +50,62 @@ def seth(start=2, stop=5):
     """set host            => fab seth:2,5"""
     env.user = 'hduser'
     env.hosts = ["node%d" % i for i in range(int(start), int(stop) + 1)]
+
+def hd0():
+    """hadoop uninstall     => fab seth:2,5 hd0"""
+    # 0. rm hadoop
+    file_i = os.path.join(DEPLOY_HOME, 'hadoop')
+    run('rm -rf {0}'.format(file_i))
+    file_i = os.path.join(APP_HOME, 'hadoop')
+    run('rm -rf {0}'.format(file_i))
+
+def hd1():
+    """hadoop install      => fab seth:2,5 hd1"""
+    # 1. copy package
+    file_i = os.path.join(SOFTWARE_HOME, HADOOP_PKG)
+    file_o = os.path.join(DEPLOY_HOME, HADOOP_PKG)
+    put(file_i, file_o)
+
+    # 2. unzip
+    file_i = os.path.join(DEPLOY_HOME, HADOOP_PKG)
+    run('tar -zxf {0} -C {1}'.format(file_i, DEPLOY_HOME))
+
+    # 3. rename
+    file_i = os.path.join(DEPLOY_HOME, 'hadoop-2.7.0')
+    file_o = os.path.join(DEPLOY_HOME, 'hadoop')
+    run('mv {0} {1}'.format(file_i, file_o))
+
+    # 4. copy cfg
+    for cfg in HADOOP_CFGS:
+        file_i = os.path.join(CONF_HOME, cfg)
+        file_o = os.path.join(DEPLOY_HOME, 'etc/hadoop', cfg)
+        put(file_i, file_o)
+
+    # 5. clean up
+    file_i = os.path.join(DEPLOY_HOME, HADOOP_PKG)
+    run('rm {0}'.format(file_i))
+
+def hd2():
+    """hadoop nn format    => fab seth:5,5 hd2"""
+    file_i = os.path.join(DEPLOY_HOME, 'hadoop/bin/hdfs namenode -format')
+    run(file_i)
+
+def hd3(option):
+    """hadoop start        => fab seth:5,5 hd3:start/stop"""
+    if 'start' == option:
+        with settings(host_string=HADOOP_NN):
+            file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/start-dfs.sh')
+            run(file_i)
+            file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/start-yarn.sh')
+            run(file_i)
+    elif 'stop' == option:
+        with settings(host_string=HADOOP_NN):
+            file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/stop-yarn.sh')
+            run(file_i)
+            file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/stop-dfs.sh')
+            run(file_i)
+    else:
+        print 'fab seth:5,5 hd3:start/stop'
 
 def zk0():
     """zookeeper uninstall => fab seth:2,4 zk0"""
@@ -69,25 +136,27 @@ def zk1():
     file_o = os.path.join(DEPLOY_HOME, 'zookeeper/conf', ZOOKEEPER_CFG)
     put(file_i, file_o)
 
+    # 5. clean up
+    file_i = os.path.join(DEPLOY_HOME, ZOOKEEPER_PKG)
+    run('rm {0}'.format(file_i))
+
 def zk3():
     """zookeeper set myid  => fab seth:2,4 zk3"""
     for i in range(2, 5):
         with settings(host_string='node{0}'.format(i)):
-            run('mkdir -p /app/hadoop/zookeeper/data')
-            run('echo {0} > /app/hadoop/zookeeper/data/myid'.format(i))
+            run('mkdir -p /app/zookeeper/data')
+            run('echo {0} > /app/zookeeper/data/myid'.format(i))
 
 def zk4(option):
     """zookeeper service   => fab seth:2,4 zk4:start/stop/status"""
-    file_i = os.path.join(DEPLOY_HOME, 'zookeeper/bin/zkServer.sh')
-    run('{0} {1}'.format(file_i, option))
+    file_i = os.path.join(DEPLOY_HOME, 'zookeeper/bin/zkServer.sh {0}'.format(option))
+    run(file_i)
 
 def hb0():
     """hbase uninstall     => fab seth:2,5 hb0"""
     # 0. rm hbase
     file_i = os.path.join(DEPLOY_HOME, 'hbase')
     run('rm -rf {0}'.format(file_i))
-    # file_i = os.path.join(APP_HOME, 'hbase')
-    # run('rm -rf {0}'.format(file_i))
 
 def hb1():
     """hbase install       => fab seth:2,5 hb1"""
@@ -105,28 +174,21 @@ def hb1():
     file_o = os.path.join(DEPLOY_HOME, 'hbase')
     run('mv {0} {1}'.format(file_i, file_o))
 
-def hb2():
-    """hbase config        => fab seth:2,5 hb2"""
-
     # 4. copy cfg
-    file_i1 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_BM)
-    file_o1 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_BM)
-    file_i2 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_ENV)
-    file_o2 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_ENV)
-    file_i3 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_RS)
-    file_o3 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_RS)
-    file_i4 = os.path.join(CONF_HOME, 'hbase', HBASE_CFG_SITE)
-    file_o4 = os.path.join(DEPLOY_HOME, 'hbase/conf', HBASE_CFG_SITE)
-    put(file_i1, file_o1)
-    put(file_i2, file_o2)
-    put(file_i3, file_o3)
-    put(file_i4, file_o4)
+    for cfg in HBASE_CFGS:
+        file_i = os.path.join(CONF_HOME, 'hbase', cfg)
+        file_o = os.path.join(DEPLOY_HOME, 'hbase/conf', cfg)
+        put(file_i, file_o)
 
-def hb3(option):
-    """hbase server        => fab seth:5,5 hb3:start/stop"""
+    # 5. clean up
+    file_i = os.path.join(DEPLOY_HOME, HBASE_PKG)
+    run('rm {0}'.format(file_i))
+
+def hb2(option):
+    """hbase server        => fab seth:5,5 hb2:start/stop"""
     with settings(host_string=HBASE_MASTER):
-        file_i = os.path.join(DEPLOY_HOME, 'hbase/bin/')
-        run('{0}{1}-hbase.sh'.format(file_i, option))
+        file_i = os.path.join(DEPLOY_HOME, 'hbase/bin', '{0}-hbase.sh'.format(option))
+        run(file_i)
 
 def sq10():
     """sqoop1 uninstall    => fab seth:3,3 sq10"""
