@@ -15,13 +15,13 @@ create table movies(
 create table ratings(
     user_id int not null,
     movie_id int not null,
-    rating int,
-    time_stamp varchar(10) null
+    rating float,
+    time_stamp varchar(255) null
 );
 
 create table tags(
     user_id int not null,
     movie_id int not null,
     tag varchar(255) null,
-    time_stamp varchar(10) null
+    time_stamp varchar(255) null
 );

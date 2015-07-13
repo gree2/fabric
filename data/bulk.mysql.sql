@@ -1,4 +1,4 @@
-load data local infile '~/Downloads/data/links.csv'   into table links   fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
-load data local infile '~/Downloads/data/movies.csv'  into table movies  fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
-load data local infile '~/Downloads/data/ratings.csv' into table ratings fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
-load data local infile '~/Downloads/data/tags.csv'    into table tags    fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
+load data local infile '~/Downloads/ml-latest/links.csv'   into table links   fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
+load data local infile '~/Downloads/ml-latest/movies.csv'  into table movies  fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
+load data local infile '~/Downloads/ml-latest/ratings.csv' into table ratings fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
+load data local infile '~/Downloads/ml-latest/tags.csv'    into table tags    fields terminated by ',' enclosed by '\"' lines terminated by '\n' ignore 1 lines;
