@@ -2,26 +2,32 @@
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
+export ANACONDA_HOME=/opt/bigdata/anaconda
+
 export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
+
 export HADOOP_PREFIX=/opt/bigdata/hadoop
-export HADOOP_HOME=/opt/bigdata/hadoop
 export HADOOP_COMMON_HOME=$HADOOP_PREFIX
 export HADOOP_CONF_DIR=$HADOOP_PREFIX/etc/hadoop
 export HADOOP_HDFS_HOME=$HADOOP_PREFIX
+export HADOOP_HOME=/opt/bigdata/hadoop
 export HADOOP_MAPRED_HOME=$HADOOP_PREFIX
 export HADOOP_YARN_HOME=$HADOOP_PREFIX
 
 export HBASE_HOME=/opt/bigdata/hbase
+export SPARK_HOME=/opt/bigdata/spark
 export SQOOP_HOME=/opt/bigdata/sqoop
 export ZOOKEEPER_HOME=/opt/bigdata/zookeeper
 
+export PATH=$PATH:$ANACONDA_HOME/bin
 export PATH=$PATH:$JAVA_HOME
+
 export PATH=$PATH:$HADOOP_HOME/bin
 export PATH=$PATH:$HADOOP_HOME/sbin
 export PATH=$PATH:$HBASE_HOME/bin
+export PATH=$PATH:$SPARK_HOME/bin
 export PATH=$PATH:$SQOOP_HOME/bin
 export PATH=$PATH:$ZOOKEEPER_HOME/bin
-
 
 # If not running interactively, don't do anything
 case $- in

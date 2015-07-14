@@ -54,7 +54,7 @@ env.user = 'hduser'
 env.password = 'icssda'
 
 def sete(start=2, stop=5):
-    """set host            => fab sete:2,5"""
+    """set user hosts      => fab sete:2,5"""
     env.user = 'hduser'
     env.hosts = ["node%d" % i for i in range(int(start), int(stop) + 1)]
 
@@ -66,6 +66,16 @@ def ub0():
     put(file_i, file_o)
     file_i = os.path.join('~', '.bashrc')
     run('source {0}'.format(file_i))
+
+def ub1():
+    """service management  => fab sete:2,2 ub1"""
+    print 'service management'
+    print 'service start => fab sete:5,5 hd3:start sete:2,4 zk2:start sete:5,5 hb2:start'
+    print 'service stop  => fab sete:5,5 hb2:stop  sete:2,4 zk2:stop  sete:5,5 hd3:stop'
+
+def ub2():
+    """service jps         => fab sete:2,5 ub2"""
+    run('jps')
 
 def hd0():
     """hadoop uninstall    => fab sete:2,5 hd0"""
@@ -118,18 +128,12 @@ def hd3(option):
             run(file_i)
             file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/start-yarn.sh')
             run(file_i)
-    elif 'stop' == option:
+    else:
         with settings(host_string=HADOOP_NN):
             file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/stop-yarn.sh')
             run(file_i)
             file_i = os.path.join(DEPLOY_HOME, 'hadoop/sbin/stop-dfs.sh')
             run(file_i)
-    else:
-        print 'fab sete:5,5 hd3:start/stop'
-
-def hd4():
-    """hadoop jps          => fab sete:2,5 hd4"""
-    run('jps')
 
 def zk0():
     """zookeeper uninstall => fab sete:2,4 zk0"""
@@ -171,7 +175,6 @@ def zk1():
     # 6. clean up
     file_i = os.path.join(DEPLOY_HOME, ZOOKEEPER_PKG)
     run('rm {0}'.format(file_i))
-
 
 def zk2(option):
     """zookeeper service   => fab sete:2,4 zk2:start/stop/status"""
@@ -332,7 +335,7 @@ def sq21():
     run('rm {0}'.format(file_i))
 
 def sq22(option):
-    """sqoop2 server       => fab sete:2,3 sq22:strat/stop"""
+    """sqoop2 server       => fab sete:2,3 sq22:start/stop"""
     file_i = os.path.join(DEPLOY_HOME, 'sqoop/bin/sqoop2-server')
     run('{0} {1}'.format(file_i, option))
 
@@ -361,7 +364,6 @@ def sp1():
     # 4. clean up
     file_i = os.path.join(DEPLOY_HOME, SPARK_PKG)
     run('rm {0}'.format(file_i))
-
 
 def sp2(option):
     """spark master        => fab sete:5,5 sp2:start/stop"""
