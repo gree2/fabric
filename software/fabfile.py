@@ -7,7 +7,7 @@ env.hosts = ['localhost']
 
 MIRROR = 'http://mirrors.cnnic.cn/apache/'
 CMD = 'wget {0}{1} -P {2}'
-WORKING_DIR = '~/Downloads/'
+WORKING_DIR = '~/Downloads'
 
 VER_ACCUMULO = '1.7.0'
 VER_DRILL = '1.0.0'
