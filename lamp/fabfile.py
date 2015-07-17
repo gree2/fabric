@@ -13,21 +13,21 @@ WORKING_DIR = '~/Documents/github/fabric/lamp'
 APACHE2_WWW = '/var/www/html'
 
 def sete(user='hduser'):
-    """set user password => fab sete"""
+    """set env          => fab sete"""
     env.user = user
     env.password = 'icssda'
 
 def seta0():
-    """apache install    => fab seta0"""
+    """apache install   => fab seta0"""
     sudo('apt-get update')
     sudo('apt-get install apache2')
 
 def seta1(option):
-    """apache service    => fab seta1:start/stop/restart"""
+    """apache service   => fab seta1:start/stop/restart"""
     sudo('/etc/init.d/apache2 {0}'.format(option))
 
 def seta2(option):
-    """apache autostart  => fab seta2:y/n"""
+    """apache autostart => fab seta2:y/n"""
     if 'y' == option:
         sudo('update-rc.d -f apache2 remove')
     else:
@@ -48,7 +48,7 @@ def setm1():
     sudo('rm -rf /etc/mysql')
 
 def setm2(options):
-    """mysql status     => fab setm2:start/stop/status"""
+    """mysql service    => fab setm2:start/stop/status"""
     sudo('systemctl {0} mysql'.format(options))
 
 def setp0():
@@ -59,6 +59,7 @@ def setp1():
     """php test         => fab setp1"""
     file_i = os.path.join(WORKING_DIR, 'php/test.php')
     file_o = os.path.join(APACHE2_WWW, 'test.php')
-    put(file_i, file_o)
+    put(file_i, file_o, use_sudo=True)
+    print 'restarting apache...'
     sudo('service apache2 restart')
-    print 'http://{0}/test.php'.format(env.host)
+    print 'please visit this site => http://{0}/test.php'.format(env.host)

@@ -45,6 +45,11 @@ PATH_STORM = 'storm/apache-storm-{0}/apache-storm-{0}.tar.gz'
 PATH_TEZ = 'tez/{0}/apache-tez-{0}-src.tar.gz'
 PATH_ZOOKEEPER = 'zookeeper/zookeeper-{0}/zookeeper-{0}.tar.gz'
 
+NAGIOS_VER = '4.0.8'
+NAGIOS_PKG = 'nagios-{0}.tar.gz'.format(NAGIOS_VER)
+NAGIOS_PLUGINS_VER = '2.0.3'
+NAGIOS_PLUGINS_PKG = 'nagios-plugins-{0}.tar.gz'.format(NAGIOS_PLUGINS_VER)
+
 # CONNECTOR_MY = "curl -L \
 # 'http://www.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.35.tar.gz/from/http://mysql.he.net/' \
 # > {0}/mysql-connector-java-5.1.35.tar.gz"
@@ -133,3 +138,13 @@ def get14(version=VER_TEZ, prefix=WORKING_DIR):
 def get15(version=VER_ZOOKEEPER, prefix=WORKING_DIR):
     """get zookeeper   => fab get15:3.4.6,prefix"""
     run(CMD.format(MIRROR, PATH_ZOOKEEPER.format(version), prefix))
+
+def get16(prefix=WORKING_DIR):
+    """get nagios      => fab get16"""
+    # download nagios
+    # base_url = 'http://prdownloads.sourceforge.net/sourceforge/nagios/{0}'
+    base_url = 'https://github.com/NagiosEnterprises/nagioscore/archive/{0}'
+    run('wget {0} -P {1}'.format(base_url.format(NAGIOS_PKG), prefix))
+    # download nagios plugins
+    base_url = 'http://nagios-plugins.org/download/{0}'
+    run('wget {0} -P {1}'.format(base_url.format(NAGIOS_PLUGINS_PKG), prefix))
