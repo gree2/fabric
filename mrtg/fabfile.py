@@ -31,22 +31,13 @@ def setec():
         # run('ls nagios*')
         sudo('rm -rf nagios*')
 
-def setc00():
-    """client: add epel-release repo       => fab setc00"""
-    sudo('yum install epel-release')
+def setm00():
+    """mrtg install       => fab setm00"""
+    sudo('apt-get install snmpd mrtg')
 
-def setc01(option='debian'):
-    """client: install nrpe nagios-plugins => fab setc01:debian/other"""
-    if 'debian' == option:
-        sudo('apt-get install nagios-nrpe-server nagios-plugins')
-    else:
-        sudo('yum install nrpe nagios-plugins-all openssl')
-
-def setc02():
-    """client: copy nrpe server conf       => fab setc02"""
-    file_i = os.path.join(FABFILE_DIR, 'client/nrpe.cfg')
-    file_o = os.path.join(CLIENT_CFG_DIR, 'nrpe.cfg')
-    put(file_i, file_o, use_sudo=True)
+def setm01():
+    """mrtg config        => fab setm01"""
+    sudo('mkdir /var/www/mrtg')
 
 def setc03(platform='debian'):
     """client: nagios nrpe service restart => fab setc03:centos6/centos7/debian"""

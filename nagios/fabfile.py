@@ -12,24 +12,32 @@ env.password = 'icssda'
 FABFILE_DIR = '~/Documents/github/fabric/nagios'
 WORKING_DIR = '~/Downloads'
 DEPLOY_HOME = '/usr/local'
-APACHE2_SITES_ENABLED = '/etc/apache2/sites-enabled'
+APACHE2_CFG_DIR = '/etc/apache2'
+APACHE2_SITES_ENABLED = APACHE2_CFG_DIR + '/sites-enabled'
 CLIENT_CFG_DIR = '/etc/nagios'
 
 NAGIOS_VER = '4.0.8'
 NAGIOS_PKG = 'nagios-{0}.tar.gz'.format(NAGIOS_VER)
 NAGIOS_PLUGINS_VER = '2.0.3'
 NAGIOS_PLUGINS_PKG = 'nagios-plugins-{0}.tar.gz'.format(NAGIOS_PLUGINS_VER)
+NAGIOSGRAPH_VER = '1.5.2'
+NAGIOSGRAPH_PKG = 'nagiosgraph-{0}.tar.gz'.format(NAGIOSGRAPH_VER)
 
 def setep(user='hduser'):
-    """env:    set env user password       => fab setep"""
+    """env: set env user password          => fab setep"""
     env.user = user
     env.password = 'icssda'
 
 def setec():
-    """env:    clean up nagios install     => fab setec"""
+    """env: clean up nagios install        => fab setec"""
     with cd(WORKING_DIR):
         # run('ls nagios*')
         sudo('rm -rf nagios*')
+
+def seter():
+    """env: restart apache2 nagios         => fab seter"""
+    sudo('service apache2 restart')
+    sudo('service nagios restart')
 
 def setc00():
     """client: add epel-release repo       => fab setc00"""
@@ -66,6 +74,60 @@ def setc04():
         file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/servers/node{0}.cfg'.format(end))
         put(file_i, file_o, use_sudo=True)
     sudo('service nagios restart')
+
+def setg00():
+    """nagiosgraph: copy software          => fab setg00"""
+    # 1. copy package
+    file_i = os.path.join(WORKING_DIR, NAGIOSGRAPH_PKG)
+    file_o = os.path.join(WORKING_DIR, NAGIOSGRAPH_PKG)
+    put(file_i, file_o)
+    # 2. unzip
+    file_i = os.path.join(WORKING_DIR, NAGIOSGRAPH_PKG)
+    run('tar -zxf {0} -C {1}'.format(file_i, WORKING_DIR))
+
+def setg01():
+    """nagiosgraph: prerequisites check    => fab setg01"""
+    file_i = os.path.join(WORKING_DIR, 'nagiosgraph-{0}'.format(NAGIOSGRAPH_VER))
+    with cd(file_i):
+        sudo('./install.pl --check-prereq')
+
+def setg02():
+    """nagiosgraph: prerequisites install  => fab setg02"""
+    sudo('apt-get install librrds-perl libgd-gd2-perl')
+    print 'install Nagios::Config'
+    sudo('perl -MCPAN -e shell')
+
+def setg03():
+    """nagiosgraph: installation           => fab setg03"""
+    file_i = os.path.join(WORKING_DIR, 'nagiosgraph-{0}'.format(NAGIOSGRAPH_VER))
+    with cd(file_i):
+        print 'Modify the Nagios configuration? [n] y'
+        print 'Modify the Apache configuration? [n] y'
+        sudo('./install.pl --layout standalone --prefix /usr/local/nagiosgraph')
+
+def setg04():
+    """nagiosgraph: copy config, restart   => fab setg04"""
+    # 1. copy apache2.conf      => /etc/apache2
+    file_i = os.path.join(FABFILE_DIR, 'nagiosgraph/apache2.conf')
+    file_o = os.path.join(APACHE2_CFG_DIR, 'apache2.conf')
+    put(file_i, file_o)
+    # 2. copy common-header.ssi => /usr/local/nagios/share/ssi
+    file_i = os.path.join(FABFILE_DIR, 'nagiosgraph/common-header.ssi')
+    file_o = os.path.join(DEPLOY_HOME, 'nagios/share/ssi', 'common-header.ssi')
+    put(file_i, file_o)
+    # 3. copy localhost.cfg     => /usr/local/nagios/etc/objects
+    file_i = os.path.join(FABFILE_DIR, 'nagiosgraph/localhost.cfg')
+    file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/objects', 'localhost.cfg')
+    put(file_i, file_o)
+    # 4. copy side.php          => /usr/local/nagios/share
+    file_i = os.path.join(FABFILE_DIR, 'nagiosgraph/side.php')
+    file_o = os.path.join(DEPLOY_HOME, 'nagios/share', 'side.php')
+    put(file_i, file_o)
+
+def setg05():
+    """nagiosgraph: cleanup                => fab setg05"""
+    with cd(WORKING_DIR):
+        sudo('rm -rf nagiosgraph*')
 
 def sets00():
     """server: install prerequisites       => fab sets00"""

@@ -47,8 +47,16 @@ PATH_ZOOKEEPER = 'zookeeper/zookeeper-{0}/zookeeper-{0}.tar.gz'
 
 NAGIOS_VER = '4.0.8'
 NAGIOS_PKG = 'nagios-{0}.tar.gz'.format(NAGIOS_VER)
+# NAGIOS_URL = 'http://prdownloads.sourceforge.net/sourceforge/nagios/{0}'
+NAGIOS_URL = 'https://github.com/NagiosEnterprises/nagioscore/archive/{0}'
+
 NAGIOS_PLUGINS_VER = '2.0.3'
 NAGIOS_PLUGINS_PKG = 'nagios-plugins-{0}.tar.gz'.format(NAGIOS_PLUGINS_VER)
+NAGIOS_PLUGINS_URL = 'http://nagios-plugins.org/download/{0}'
+
+NAGIOSGRAPH_VER = '1.5.2'
+NAGIOSGRAPH_PKG = 'nagiosgraph-{0}.tar.gz'.format(NAGIOSGRAPH_VER)
+NAGIOSGRAPH_URL = 'http://iweb.dl.sourceforge.net/project/nagiosgraph/nagiosgraph/{0}/{1}'
 
 # CONNECTOR_MY = "curl -L \
 # 'http://www.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.35.tar.gz/from/http://mysql.he.net/' \
@@ -142,9 +150,14 @@ def get15(version=VER_ZOOKEEPER, prefix=WORKING_DIR):
 def get16(prefix=WORKING_DIR):
     """get nagios      => fab get16"""
     # download nagios
-    # base_url = 'http://prdownloads.sourceforge.net/sourceforge/nagios/{0}'
-    base_url = 'https://github.com/NagiosEnterprises/nagioscore/archive/{0}'
-    run('wget {0} -P {1}'.format(base_url.format(NAGIOS_PKG), prefix))
+    run('wget {0} -P {1}'.format(NAGIOS_URL.format(NAGIOS_PKG), prefix))
+
+def get17(prefix=WORKING_DIR):
+    """get nagios      => fab get17"""
     # download nagios plugins
-    base_url = 'http://nagios-plugins.org/download/{0}'
-    run('wget {0} -P {1}'.format(base_url.format(NAGIOS_PLUGINS_PKG), prefix))
+    run('wget {0} -P {1}'.format(NAGIOS_PLUGINS_URL.format(NAGIOS_PLUGINS_PKG), prefix))
+
+def get18(prefix=WORKING_DIR):
+    """get nagios      => fab get18"""
+    # download nagiosgraph
+    run('wget {0} -P {1}'.format(NAGIOSGRAPH_URL.format(NAGIOSGRAPH_VER, NAGIOSGRAPH_PKG), prefix))
