@@ -1,7 +1,7 @@
 #! *-* coding: utf-8 *-*
 """deploy nagios"""
 
-from fabric.api import cd, env
+from fabric.api import cd, env, settings
 from fabric.operations import put, run, sudo
 import os
 
@@ -12,9 +12,13 @@ env.password = 'icssda'
 FABFILE_DIR = '~/Documents/github/fabric/nagios'
 WORKING_DIR = '~/Downloads'
 DEPLOY_HOME = '/usr/local'
+DEPLOY_PLUGIN_HOME = '/usr/lib/nagios/plugins'
 APACHE2_CFG_DIR = '/etc/apache2'
 APACHE2_SITES_ENABLED = APACHE2_CFG_DIR + '/sites-enabled'
 CLIENT_CFG_DIR = '/etc/nagios'
+
+NAGIOS_SERVER = 'node5@node5'
+NAGIOS_CLIENT = ["node%d" % c for c in range(int(2), int(5) + 1)]
 
 NAGIOS_VER = '4.0.8'
 NAGIOS_PKG = 'nagios-{0}.tar.gz'.format(NAGIOS_VER)
@@ -23,16 +27,25 @@ NAGIOS_PLUGINS_PKG = 'nagios-plugins-{0}.tar.gz'.format(NAGIOS_PLUGINS_VER)
 NAGIOSGRAPH_VER = '1.5.2'
 NAGIOSGRAPH_PKG = 'nagiosgraph-{0}.tar.gz'.format(NAGIOSGRAPH_VER)
 
-def setep(user='hduser'):
-    """env: set env user password          => fab setep"""
-    env.user = user
-    env.password = 'icssda'
 
 def setec():
     """env: clean up nagios install        => fab setec"""
     with cd(WORKING_DIR):
         # run('ls nagios*')
         sudo('rm -rf nagios*')
+
+def seteh(start='2', stop='5'):
+    """env: set env hosts                  => fab seteh"""
+    env.hosts = ["node{0}@node{0}".format(i) for i in range(int(start), int(stop) + 1)]
+    password = ['icssda'] * (int(stop) - int(start) + 1)
+    # http://stackoverflow.com/questions/209840/map-two-lists-into-a-dictionary-in-python
+    env.passwords = dict(zip(env.hosts, password))
+    print env.passwords
+
+def setep(user='hduser'):
+    """env: set env user password          => fab setep"""
+    env.user = user
+    env.password = 'icssda'
 
 def seter():
     """env: restart apache2 nagios         => fab seter"""
@@ -46,7 +59,7 @@ def setc00():
 def setc01(option='debian'):
     """client: install nrpe nagios-plugins => fab setc01:debian/other"""
     if 'debian' == option:
-        sudo('apt-get install nagios-nrpe-server nagios-plugins')
+        sudo('apt-get install nagios-nrpe-server nagios-plugins nagios-nrpe-plugin')
     else:
         sudo('yum install nrpe nagios-plugins-all openssl')
 
@@ -68,12 +81,25 @@ def setc03(platform='debian'):
         sudo('chkconfig nrpe on')
 
 def setc04():
-    """client: copy to be mornitored conf  => fab setc04"""
-    file_i = os.path.join(FABFILE_DIR, 'client/nrpe.cfg')
-    for end in range(2, 6):
-        file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/servers/node{0}.cfg'.format(end))
-        put(file_i, file_o, use_sudo=True)
-    sudo('service nagios restart')
+    """client: copy nrpe.cfg commands      => fab seteh:2,5 setc04"""
+    # 1. copy nrpe.cfg to nrpe daemon => /etc/nagios/nrpe.cfg
+    file_i = os.path.join(FABFILE_DIR, 'nrpe/nrpe.cfg')
+    file_o = os.path.join(CLIENT_CFG_DIR, 'nrpe.cfg')
+    put(file_i, file_o, use_sudo=True)
+    # 2. copy commands to libexec => /usr/local/nagios/libexec
+    file_i = os.path.join(FABFILE_DIR, 'command/check_net_transfer')
+    file_o = os.path.join(DEPLOY_PLUGIN_HOME, 'check_net_transfer')
+    put(file_i, file_o, use_sudo=True)
+    sudo('chown root:root {0}'.format(file_o))
+    sudo('chmod +x {0}'.format(file_o))
+    # 3. restart nrpe-server on all nodes
+    sudo('/etc/init.d/nagios-nrpe-server restart')
+    # 4. copy node?.cfg to nagios server => /usr/local/nagios/etc/servers
+    with settings(host_string=NAGIOS_SERVER):
+        for end in range(2, 6):
+            file_i = os.path.join(FABFILE_DIR, 'server/node{0}.cfg'.format(end))
+            file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/servers/node{0}.cfg'.format(end))
+            put(file_i, file_o, use_sudo=True)
 
 def setg00():
     """nagiosgraph: copy software          => fab setg00"""
