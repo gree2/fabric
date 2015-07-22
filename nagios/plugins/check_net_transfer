@@ -43,8 +43,8 @@ old_received_bytes=""
 transmitted_bytes=""
 old_transmitted_bytes=""
 
-warn=80000000  # i.e 80Mbps
-crit=120000000  # i.e 120MBps
+warn=80000000000  # i.e 80Mbps
+crit=120000000000  # i.e 120MBps
 
 
 ###############################################

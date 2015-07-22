@@ -86,16 +86,32 @@ def setc04():
     file_i = os.path.join(FABFILE_DIR, 'nrpe/nrpe.cfg')
     file_o = os.path.join(CLIENT_CFG_DIR, 'nrpe.cfg')
     put(file_i, file_o, use_sudo=True)
-    # 2. copy commands to libexec => /usr/local/nagios/libexec
-    file_i = os.path.join(FABFILE_DIR, 'command/check_net_transfer')
+    # 2. copy plugins => /usr/lib/nagios/plugins
+    # 2.1 check_net_transfer
+    file_i = os.path.join(FABFILE_DIR, 'plugins/check_net_transfer')
     file_o = os.path.join(DEPLOY_PLUGIN_HOME, 'check_net_transfer')
     put(file_i, file_o, use_sudo=True)
     sudo('chown root:root {0}'.format(file_o))
     sudo('chmod +x {0}'.format(file_o))
+    # 2.2 check_bandwidth
+    file_i = os.path.join(FABFILE_DIR, 'plugins/check_bandwidth.sh')
+    file_o = os.path.join(DEPLOY_PLUGIN_HOME, 'check_bandwidth.sh')
+    put(file_i, file_o, use_sudo=True)
+    sudo('chown root:root {0}'.format(file_o))
+    sudo('chmod +x {0}'.format(file_o))
+
     # 3. restart nrpe-server on all nodes
     sudo('/etc/init.d/nagios-nrpe-server restart')
     # 4. copy node?.cfg to nagios server => /usr/local/nagios/etc/servers
     with settings(host_string=NAGIOS_SERVER):
+        # 1. copy objects => /usr/local/nagios/etc/objects
+        file_i = os.path.join(FABFILE_DIR, 'objects/commands.cfg')
+        file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/objects/commands.cfg')
+        put(file_i, file_o, use_sudo=True)
+        sudo('chown root:root {0}'.format(file_o))
+        sudo('chmod +x {0}'.format(file_o))
+
+        # 2. copy servers => /usr/local/nagios/etc/servers
         for end in range(2, 6):
             file_i = os.path.join(FABFILE_DIR, 'server/node{0}.cfg'.format(end))
             file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/servers/node{0}.cfg'.format(end))

@@ -54,9 +54,19 @@ NAGIOS_PLUGINS_VER = '2.0.3'
 NAGIOS_PLUGINS_PKG = 'nagios-plugins-{0}.tar.gz'.format(NAGIOS_PLUGINS_VER)
 NAGIOS_PLUGINS_URL = 'http://nagios-plugins.org/download/{0}'
 
+MIRROR_IWEB = 'http://iweb.dl.sourceforge.net/project'
+
 NAGIOSGRAPH_VER = '1.5.2'
 NAGIOSGRAPH_PKG = 'nagiosgraph-{0}.tar.gz'.format(NAGIOSGRAPH_VER)
-NAGIOSGRAPH_URL = 'http://iweb.dl.sourceforge.net/project/nagiosgraph/nagiosgraph/{0}/{1}'
+NAGIOSGRAPH_URL = '{0}/nagiosgraph/nagiosgraph/{1}/{2}'
+
+GANGLIA_VER = '3.7.1'
+GANGLIA_PKG = 'ganglia-{0}.tar.gz'.format(GANGLIA_VER)
+GANGLIA_URL = '{0}/ganglia/ganglia%20monitoring%20core/{1}/{2}'
+
+GANGLIA_WEB_VER = '3.7.0'
+GANGLIA_WEB_PKG = 'ganglia-web-{0}.tar.gz'.format(GANGLIA_WEB_VER)
+GANGLIA_WEB_URL = '{0}/ganglia/ganglia-web/{1}/{2}'
 
 # CONNECTOR_MY = "curl -L \
 # 'http://www.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.35.tar.gz/from/http://mysql.he.net/' \
@@ -151,13 +161,17 @@ def get16(prefix=WORKING_DIR):
     """get nagios      => fab get16"""
     # download nagios
     run('wget {0} -P {1}'.format(NAGIOS_URL.format(NAGIOS_PKG), prefix))
-
-def get17(prefix=WORKING_DIR):
-    """get nagios      => fab get17"""
     # download nagios plugins
     run('wget {0} -P {1}'.format(NAGIOS_PLUGINS_URL.format(NAGIOS_PLUGINS_PKG), prefix))
-
-def get18(prefix=WORKING_DIR):
-    """get nagios      => fab get18"""
     # download nagiosgraph
-    run('wget {0} -P {1}'.format(NAGIOSGRAPH_URL.format(NAGIOSGRAPH_VER, NAGIOSGRAPH_PKG), prefix))
+    url = NAGIOSGRAPH_URL.format(MIRROR_IWEB, NAGIOSGRAPH_VER, NAGIOSGRAPH_PKG)
+    run('wget {0} -P {1}'.format(url, prefix))
+
+def get17(prefix=WORKING_DIR):
+    """get ganglia     => fab get17"""
+    # download ganglia
+    url = GANGLIA_URL.format(MIRROR_IWEB, GANGLIA_VER, GANGLIA_PKG)
+    run('wget {0} -P {1}'.format(url, prefix))
+    # download ganglia-web
+    url = GANGLIA_WEB_URL.format(MIRROR_IWEB, GANGLIA_WEB_VER, GANGLIA_WEB_PKG)
+    run('wget {0} -P {1}'.format(url, prefix))
