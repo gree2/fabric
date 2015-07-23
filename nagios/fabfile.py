@@ -99,6 +99,12 @@ def setc04():
     put(file_i, file_o, use_sudo=True)
     sudo('chown root:root {0}'.format(file_o))
     sudo('chmod +x {0}'.format(file_o))
+    # 2.3 check_win_net_usage
+    file_i = os.path.join(FABFILE_DIR, 'plugins/check_win_net_usage.sh')
+    file_o = os.path.join(DEPLOY_PLUGIN_HOME, 'check_win_net_usage.sh')
+    put(file_i, file_o, use_sudo=True)
+    sudo('chown root:root {0}'.format(file_o))
+    sudo('chmod +x {0}'.format(file_o))
 
     # 3. restart nrpe-server on all nodes
     sudo('/etc/init.d/nagios-nrpe-server restart')
@@ -112,7 +118,7 @@ def setc04():
         sudo('chmod +x {0}'.format(file_o))
 
         # 2. copy servers => /usr/local/nagios/etc/servers
-        for end in range(2, 6):
+        for end in range(1, 6):
             file_i = os.path.join(FABFILE_DIR, 'server/node{0}.cfg'.format(end))
             file_o = os.path.join(DEPLOY_HOME, 'nagios/etc/servers/node{0}.cfg'.format(end))
             put(file_i, file_o, use_sudo=True)

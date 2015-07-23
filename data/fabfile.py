@@ -82,25 +82,25 @@ def my0():
     --username sa -P"
     run(cmd)
 
-def my1():
-    """mysql list-tables        => fab sete my1"""
+def my1(database='sqoop'):
+    """mysql list-tables        => fab sete my1:database"""
     cmd = "sqoop list-tables \
-    --connect 'jdbc:mysql://192.168.120.153/sqoop' \
-    --username sa -P"
+    --connect 'jdbc:mysql://192.168.120.153/{0}' \
+    --username sa -P".format(database)
     run(cmd)
 
-def my2(table='ratings'):
-    """mysql import hdfs        => fab sete my2:table"""
+def my2(database='sqoop', table='ratings'):
+    """mysql import hdfs        => fab sete my2:database,table"""
     cmd = "sqoop import \
-    --connect 'jdbc:mysql://192.168.120.153/sqoop' \
-    --username sa -P --table {0}".format(table)
+    --connect 'jdbc:mysql://192.168.120.153/{0}' \
+    --username sa -P --table {1}".format(database, table)
     run(cmd)
 
-def my3():
-    """mysql import all to hdfs => fab sete my3"""
+def my3(database='sqoop'):
+    """mysql import all to hdfs => fab sete my3:database"""
     cmd = "sqoop import-all-tables \
-    --connect 'jdbc:mysql://192.168.120.153/sqoop' \
-    --username sa -P -m 1"
+    --connect 'jdbc:mysql://192.168.120.153/{0}' \
+    --username sa -P -m 1".format(database)
     run(cmd)
 
 def my4():
@@ -119,18 +119,18 @@ def ms0():
     --username sa -P"
     run(cmd)
 
-def ms1():
-    """mssql list-tables        => fab sete ms1"""
+def ms1(database='sqoop'):
+    """mssql list-tables        => fab sete ms1:database"""
     cmd = "sqoop list-tables \
-    --connect 'jdbc:sqlserver://192.168.120.151;database=sqoop' \
-    --username sa -P"
+    --connect 'jdbc:sqlserver://192.168.120.151;database={0}' \
+    --username sa -P".format(database)
     run(cmd)
 
-def ms2(table='ratings'):
-    """mssql import to hdfs     => fab sete ms2:table"""
+def ms2(database='sqoop', table='ratings'):
+    """mssql import to hdfs     => fab sete ms2:database,table"""
     cmd = "sqoop import \
-    --connect 'jdbc:sqlserver://192.168.120.151;database=sqoop' \
-    --username sa -P --table {0}".format(table)
+    --connect 'jdbc:sqlserver://192.168.120.151;database={0}' \
+    --username sa -P --table {1}".format(database, table)
     run(cmd)
 
 def ms3(database='sqoop'):
