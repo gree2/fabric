@@ -11,11 +11,9 @@ env.password = 'icssda'
 
 FABFILE_DIR = '~/Documents/github/fabric/ganglia'
 WORKING_DIR = '~/Downloads'
-DEPLOY_HOME = '/usr/local'
-DEPLOY_PLUGIN_HOME = '/usr/lib/nagios/plugins'
+GANGLIA_CFG_FIR = '/etc/ganglia'
 APACHE2_CFG_DIR = '/etc/apache2'
 APACHE2_SITES_ENABLED = APACHE2_CFG_DIR + '/sites-enabled'
-CLIENT_CFG_DIR = '/etc/nagios'
 
 GANGLIA_MUTE = 'node5@node5'
 GANGLIA_DEAF = ["node{0}@node{0}".format(c) for c in range(int(2), int(4) + 1)]
@@ -38,7 +36,7 @@ def seth(start='2', stop='5'):
     password = ['icssda'] * (int(stop) - int(start) + 1)
     # http://stackoverflow.com/questions/209840/map-two-lists-into-a-dictionary-in-python
     env.passwords = dict(zip(env.hosts, password))
-    print env.passwords
+    # print env.passwords
 
 def setp(user='hduser'):
     """env: set user password     => fab setp"""
@@ -103,3 +101,44 @@ def set4():
     """config ganglia             => fab set4"""
     with settings(host_string=GANGLIA_MUTE):
         pass
+
+def set5(option='master'):
+    """install all                => fab seth:5,5 set5 seth:2,4 set5:nodes"""
+    common_packages = 'ganglia-monitor ganglia-monitor-python'
+    prereq_packages = 'gmetad rrdtool ganglia-webfrontend'
+    if 'master' == option:
+        sudo('apt-get -y install {0} {1}'.format(common_packages, prereq_packages))
+    elif 'nodes' == option:
+        sudo('apt-get -y install {0}'.format(common_packages))
+    else:
+        print 'do nothing'
+
+def set6(option='master'):
+    """config ganglia             => fab seth:5,5 set6 seth:2,4 set6:nodes"""
+    if 'master' == option:
+        # cp => /etc/apache2/sites-enabled/ganglia.conf
+        file_i = os.path.join(FABFILE_DIR, 'gweb/ganglia.conf')
+        file_o = os.path.join(APACHE2_SITES_ENABLED, 'ganglia.conf')
+        put(file_i, file_o, use_sudo=True)
+        # cp => /etc/ganglia/gmetad.conf
+        file_i = os.path.join(FABFILE_DIR, 'gmetad/gmetad.conf')
+        file_o = os.path.join(GANGLIA_CFG_FIR, 'gmetad.conf')
+        put(file_i, file_o, use_sudo=True)
+        # cp => /etc/ganglia/gmond.conf
+        file_i = os.path.join(FABFILE_DIR, 'gmond/master/gmond.conf')
+        file_o = os.path.join(GANGLIA_CFG_FIR, 'gmond.conf')
+        put(file_i, file_o, use_sudo=True)
+    else:
+        # cp => /etc/ganglia/gmond.conf
+        file_i = os.path.join(FABFILE_DIR, 'gmond/nodes/gmond.conf')
+        file_o = os.path.join(GANGLIA_CFG_FIR, 'gmond.conf')
+        put(file_i, file_o, use_sudo=True)
+
+def set7(option='master'):
+    """service ganglia apache2    => fab seth:5,5 set7 seth:2,4 set7:nodes"""
+    if 'master' == option:
+        sudo('service ganglia-monitor restart')
+        sudo('service gmetad restart')
+        sudo('service apache2 restart')
+    else:
+        sudo('service ganglia-monitor restart')

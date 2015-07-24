@@ -1,12 +1,12 @@
 #! *-* coding: utf-8 *-*
-"""deploy hadoop ecosystem"""
+"""sqoop import data"""
 
 from fabric.api import env
 from fabric.operations import run, put
 import os
 
 env.hosts = ['node3']
-env.user = 'node3'
+env.user = 'hduser'
 env.password = 'icssda'
 
 MIRROR = 'http://files.grouplens.org/datasets/movielens/'
@@ -17,24 +17,24 @@ CMD_MYB = ' mysql -usa -psa sqoop --local-infile < {0}'
 FABFILE_DIR = '~/Documents/github/fabric/data'
 WORKING_DIR = '~/Downloads/'
 
-def sete(user='hduser'):
-    """set user password        => fab sete"""
+def setup(user='node3'):
+    """set user password        => fab setup"""
     env.user = user
     env.password = 'icssda'
 
-def it0(prefix=WORKING_DIR):
-    """get ml-latest.zip        => fab it0:prefix"""
+def init0(prefix=WORKING_DIR):
+    """get ml-latest.zip        => fab setup init0:prefix"""
     # 1. download test data
     run(CMD_GET.format(MIRROR, 'ml-latest.zip', prefix))
 
-def it1(prefix=WORKING_DIR):
-    """unzip ml-latest.zip      => fab it1:prefix"""
+def init1(prefix=WORKING_DIR):
+    """unzip ml-latest.zip      => fab setup init1:prefix"""
     # 2. unzip test data
     file_i = os.path.join(prefix, 'ml-latest.zip')
     run('unzip {0} -d {1}'.format(file_i, prefix))
 
-def it2():
-    """create table             => fab it2"""
+def init2():
+    """create table             => fab setup init2"""
     file_name = 'create.sql'
     # 1. put file
     file_i = os.path.join(FABFILE_DIR, file_name)
@@ -47,8 +47,8 @@ def it2():
     file_i = os.path.join(WORKING_DIR, file_name)
     run('rm {0}'.format(file_i))
 
-def it3():
-    """bulk insert              => fab it3"""
+def init3():
+    """bulk insert              => fab setup init3"""
     file_name = 'bulk.mysql.sql'
     # 1. put file
     file_i = os.path.join(FABFILE_DIR, file_name)
@@ -61,8 +61,8 @@ def it3():
     file_i = os.path.join(WORKING_DIR, file_name)
     run('rm {0}'.format(file_i))
 
-def it4():
-    """drop table               => fab it4"""
+def init4():
+    """drop table               => fab setup init4"""
     file_name = 'drop.sql'
     # 1. put file
     file_i = os.path.join(FABFILE_DIR, file_name)
@@ -75,36 +75,36 @@ def it4():
     file_i = os.path.join(WORKING_DIR, file_name)
     run('rm {0}'.format(file_i))
 
-def my0():
-    """mysql list-databases     => fab sete my0"""
+def myim0():
+    """mysql list-databases     => fab myim0"""
     cmd = "sqoop list-databases \
     --connect 'jdbc:mysql://192.168.120.153' \
     --username sa -P"
     run(cmd)
 
-def my1(database='sqoop'):
-    """mysql list-tables        => fab sete my1:database"""
+def myim1(database='sqoop'):
+    """mysql list-tables        => fab myim1:database"""
     cmd = "sqoop list-tables \
     --connect 'jdbc:mysql://192.168.120.153/{0}' \
     --username sa -P".format(database)
     run(cmd)
 
-def my2(database='sqoop', table='ratings'):
-    """mysql import hdfs        => fab sete my2:database,table"""
+def myim2(database='sqoop', table='ratings'):
+    """mysql import hdfs        => fab myim2:database,table"""
     cmd = "sqoop import \
     --connect 'jdbc:mysql://192.168.120.153/{0}' \
     --username sa -P --table {1}".format(database, table)
     run(cmd)
 
-def my3(database='sqoop'):
-    """mysql import all to hdfs => fab sete my3:database"""
+def myim3(database='sqoop'):
+    """mysql import all to hdfs => fab myim3:database"""
     cmd = "sqoop import-all-tables \
     --connect 'jdbc:mysql://192.168.120.153/{0}' \
     --username sa -P -m 1".format(database)
     run(cmd)
 
-def my4():
-    """mysql import to hbase    => fab sete my4"""
+def myim4():
+    """mysql import to hbase    => fab myim4"""
     cmd = "sqoop import \
     --connect 'jdbc:sqlserver://192.168.120.151;database=sqoop' \
     --username sa -P --table ratings --hbase-table ratings \
@@ -112,36 +112,36 @@ def my4():
     --hbase-create-table -m 1"
     run(cmd)
 
-def ms0():
-    """mssql list-databases     => fab sete ms0"""
+def msim0():
+    """mssql list-databases     => fab msim0"""
     cmd = "sqoop list-databases \
     --connect 'jdbc:sqlserver://192.168.120.151' \
     --username sa -P"
     run(cmd)
 
-def ms1(database='sqoop'):
-    """mssql list-tables        => fab sete ms1:database"""
+def msim1(database='sqoop'):
+    """mssql list-tables        => fab msim1:database"""
     cmd = "sqoop list-tables \
     --connect 'jdbc:sqlserver://192.168.120.151;database={0}' \
     --username sa -P".format(database)
     run(cmd)
 
-def ms2(database='sqoop', table='ratings'):
-    """mssql import to hdfs     => fab sete ms2:database,table"""
+def msim2(database='sqoop', table='ratings'):
+    """mssql import to hdfs     => fab msim2:database,table"""
     cmd = "sqoop import \
     --connect 'jdbc:sqlserver://192.168.120.151;database={0}' \
     --username sa -P --table {1}".format(database, table)
     run(cmd)
 
-def ms3(database='sqoop'):
-    """mssql import all to hdfs => fab sete ms3:database"""
+def msim3(database='sqoop'):
+    """mssql import all to hdfs => fab msim3:database"""
     cmd = "sqoop import-all-tables \
     --connect 'jdbc:sqlserver://192.168.120.151;database={0}' \
     --username sa -P -m 1".format(database)
     run(cmd)
 
-def ms4():
-    """mssql import to hbase    => fab sete ms4"""
+def msim4():
+    """mssql import to hbase    => fab msim4"""
     cmd = "sqoop import \
     --connect 'jdbc:sqlserver://192.168.120.151;database=sqoop' \
     --username sa -P --table ratings --hbase-table ratings \
@@ -149,18 +149,33 @@ def ms4():
     --hbase-create-table -m 1"
     run(cmd)
 
-def hd0(table):
-    """hdfs dfs -ls             => fab sete hd0:table"""
-    run('hdfs dfs -ls /user/hduser/{0}'.format(table))
+def hdfs0(path='/user/hduser'):
+    """hdfs dfs -ls             => fab hdfs0:path"""
+    run('hdfs dfs -ls {0}'.format(path))
 
-def hd1():
-    """hdfs dfs -ls -R          => fab sete hd1"""
-    run('hdfs dfs -ls -R /user/hduser')
+def hdfs1(path='/user/hduser'):
+    """hdfs dfs -ls -R          => fab hdfs1:path"""
+    run('hdfs dfs -ls -R {0}'.format(path))
 
-def hd2():
-    """hdfs dfs -cat | head     => fab sete hd2"""
-    run('hdfs dfs -cat /user/hduser/基础表_贷款业务_额度使用情况信息表/part-m-00000 | head')
+def hdfs3(path='/user/hduser'):
+    """hdfs dfs -rm -r          => fab hdfs3:path"""
+    run('hdfs dfs -rm -r {0}'.format(path))
 
-def hd3(table):
-    """hdfs dfs -rm -r          => fab sete hd3:table"""
-    run('hdfs dfs -rm -r /user/hduser/{0}'.format(table))
+def hdfs4():
+    """hdfs mv import to fbig   => fab hdfs4"""
+    run('hdfs dfs -mkdir fbig')
+    run('hdfs dfs -mv /user/hduser/中* fbig')
+    run('hdfs dfs -mv /user/hduser/代* fbig')
+    run('hdfs dfs -mv /user/hduser/分* fbig')
+    run('hdfs dfs -mv /user/hduser/基* fbig')
+    run('hdfs dfs -mv /user/hduser/备* fbig')
+    run('hdfs dfs -mv /user/hduser/日* fbig')
+
+def hdfs5():
+    """hdfs dfs -rm import      => fab hdfs5"""
+    run('hdfs dfs -rm -r /user/hduser/中*')
+    run('hdfs dfs -rm -r /user/hduser/代*')
+    run('hdfs dfs -rm -r /user/hduser/分*')
+    run('hdfs dfs -rm -r /user/hduser/基*')
+    run('hdfs dfs -rm -r /user/hduser/备*')
+    run('hdfs dfs -rm -r /user/hduser/日*')
