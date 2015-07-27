@@ -11,3 +11,6 @@
 *.so
 *.jar
 *.pyc
+
+# scala sbt target
+target/
