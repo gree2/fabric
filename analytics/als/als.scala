@@ -116,3 +116,49 @@ val bAllItemIds = sc.broadcast(allItemIds)
 
 val model = ALS.trainImplicit(trainData, 10, 5, 0.01, 1.0)
 val auc = areaUnderCurve(cvData, bAllItemIds, model.predict)
+
+def predictMostListened(
+	sc: SparkContext,
+	train: RDD[Rating])(allData: RDD[(Int, Int)]) = {
+
+	val bListenCount = sc.broadcast(
+		train.map(r => (r.product, r.rating)).
+			reduceByKey(_ + _).collectAsMap()
+	)
+
+	allData.map{ case (user, product) =>
+		Rating(
+			user,
+			product,
+			bListenCount.value.getOrElse(product, 0.0)
+		)
+	}
+}
+
+val auc = areaUnderCurve(
+	cvData, bAllItemIds, predictMostListened(sc, trainData)
+)
+
+// hyperparameter selection
+val evaluations =
+	// read as a triply nested for loop
+	for (rank <- Array(10, 50);
+		lambda <- Array(1.0, 0.0001);
+		alpha <- Array(1.0, 40.0))
+		yield {
+			val model = ALS.trainImplicit(trainData, rank, 10, lambda, alpha)
+			val auc = areaUnderCurve(cvData, bAllItemIds, model.predict)
+			((rank, lambda, alpha), auc)
+		}
+
+// sort by second value (auc), descending
+evaluations.sortBy(_._2).reverse.foreach(println)
+
+// copy 100 (distinct) users to the driver
+val someUsers = allData.map(_.user).distinct().take(100)
+// map() is a local scala operation here
+val someRecommendations = someUsers.map(userId => model.recommendProducts(userId, 5))
+someRecommendations.map(
+	// mkString joins a collection to a string with a delimiter
+	recs => recs.head.user + " -> " + recs.map(_.product).mkString(", ")
+).foreach(println)
