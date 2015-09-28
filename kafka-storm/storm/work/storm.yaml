@@ -1,0 +1,7 @@
+storm.zookeeper.servers:
+    - "10.13.186.251"
+    - "10.13.186.252"
+    - "10.13.186.253"
+
+nimbus.host: "10.13.186.251"
+storm.local.dir: "/opt/app/storm"

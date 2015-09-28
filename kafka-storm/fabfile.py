@@ -35,6 +35,22 @@ def setw():
     sudo('mkdir -p %s' % APP_HOME)
     sudo('chown node.node -R %s' % DEPLOY_HOME)
 
+def setc(option):
+    '''config kafka storm  => sete:1,3 setc:home/work'''
+    # 1. config kafka
+    with settings(host_string=env.host):
+        # copy config
+        config = '{0}/server{1}.properties'.format(option, str(env.host)[-1])
+        file_i = os.path.join(CONF_HOME, 'kafka/{0}'.format(config))
+        file_o = os.path.join(DEPLOY_HOME, 'kafka/config/', KAFKA_CFG)
+        put(file_i, file_o)
+
+    # 2. config storm
+    config = 'storm/{0}/{1}'.format(option, STORM_CFG)
+    file_i = os.path.join(CONF_HOME, config)
+    file_o = os.path.join(DEPLOY_HOME, 'storm/conf/', STORM_CFG)
+    put(file_i, file_o)
+
 def zk0():
     """zookeeper uninstall => fab sete:1,3 zk0"""
     # 0. rm zookeeper
@@ -121,6 +137,23 @@ def kf1():
     file_i = os.path.join(DEPLOY_HOME, KAFKA_PKG)
     run('rm {0}'.format(file_i))
 
+def kf2():
+    '''kafka service       => fab sete:1,1 kf2 sete:2,2 kf2 sete:3,3 kf2'''
+    # on node1-3
+    # $ env JMX_PORT=10002 bin/kafka-server-start.sh config/server.properties
+    # $ env JMX_PORT=10003 bin/kafka-server-start.sh config/server.properties
+    # $ env JMX_PORT=10004 bin/kafka-server-start.sh config/server.properties
+    if env.host == 'node1':
+        file_env = 'env JMX_PORT=10002'
+    elif env.host == 'node2':
+        file_env = 'env JMX_PORT=10003'
+    else:
+        file_env = 'env JMX_PORT=10004'
+    file_i1 = os.path.join(DEPLOY_HOME, 'kafka/bin/kafka-server-start.sh')
+    file_i2 = os.path.join(DEPLOY_HOME, 'kafka/config/server.properties')
+    cmd = 'nohup {} {} {} &> /dev/null &'.format(file_env, file_i1, file_i2)
+    run(cmd, pty=False)
+
 def st0():
     '''storm uninstall     => fab sete:1,3 st0'''
     file_i = os.path.join(APP_HOME, 'storm')
@@ -145,15 +178,27 @@ def st1():
     run('mv {0} {1}'.format(file_i, file_o))
 
     # 4. mkdir `log` and copy `cfg`
-    # for i in range(1, 4):
-    with settings(host_string=env.host):
-        # mkdir log
-        run('mkdir -p {0}/storm/'.format(APP_HOME))
-        # copy cfg
-        file_i = os.path.join(CONF_HOME, 'storm/storm.yaml')
-        file_o = os.path.join(DEPLOY_HOME, 'storm/conf/', STORM_CFG)
-        put(file_i, file_o)
+    # mkdir log
+    run('mkdir -p {0}/storm/'.format(APP_HOME))
+    # copy cfg
+    file_i = os.path.join(CONF_HOME, 'storm/storm.yaml')
+    file_o = os.path.join(DEPLOY_HOME, 'storm/conf/', STORM_CFG)
+    put(file_i, file_o)
 
     # 5. clean up
     file_i = os.path.join(DEPLOY_HOME, STORM_PKG)
     run('rm {0}'.format(file_i))
+
+def st2(option):
+    '''storm nimbus        => fab sete:1,1 st2:nimbus sete:1,3 st2:supervisor sete:1,1 st2:ui'''
+    # on node1/node1-3/node1
+    # $ bin/storm nimbus     >/dev/null 2>&1 &
+    # $ bin/storm supervisor >/dev/null 2>&1 &
+    # $ bin/storm ui         >/dev/null 2>&1 &
+    file_i = os.path.join(DEPLOY_HOME, 'storm/bin/storm')
+    cmd = 'nohup {} {} &> /dev/null &'.format(file_i, option)
+    run(cmd, pty=False)
+
+def jps():
+    '''jps                 => fab sete:1,3 jps'''
+    run('jps')

@@ -1,0 +1,70 @@
+# An ultra-simple topology which shows off Storm and the pyleus.storm library
+
+name: word_count
+
+topology:
+
+    # - spout:
+    #     name: line-spout
+    #     module: word_count.line_spout
+
+    - spout:
+        name: kafka-topic1-spout
+        type: kafka
+        options:
+            # The Kafka topic to stream from.
+            # Required.
+            topic: topic1
+
+            # ZooKeeper connection string. Comma-separated list of ZooKeeper
+            # servers.
+            # Required.
+            zk_hosts: 192.168.1.251:2181,192.168.1.251:2181,192.168.1.251:2181
+
+            # Root path in ZooKeeper to store consumer offsets.
+            # Defaults to: /pyleus-kafka-offsets/<topology name>
+            zk_root: /kafka-topic1-offset/kafka-spout/test
+
+            # Kafka consumer ID.
+            # Defaults to: pyleus-<topology name>
+
+            # IMPORTANT - ALWAYS CONFIRM KAFKA CONSUMER GROUP/ID
+            #
+            consumer_id: kafka-topic1-spout
+
+            # Whether the initial offset should be that specified by
+            # start_offset_time (true) or the head of the stream (false).
+            # Defaults to false.
+            from_start: false
+
+            # The offset time to start with if from_start is true.
+            # Defaults to the earliest offset time in the stream.
+
+            # We need to set a very large start_offset_time, which will be unused due to this issue:
+            # See: https://github.com/Yelp/pyleus/issues/93
+            start_offset_time: 2147483648
+            # start_offset_time: 1398971060
+
+    - bolt:
+        name: split-words
+        module: word_count.split_words
+        parallelism_hint: 3
+        groupings:
+            # - shuffle_grouping: line-spout
+            - shuffle_grouping: kafka-topic1-spout
+
+    - bolt:
+        name: count-words
+        module: word_count.count_words
+        parallelism_hint: 3
+        groupings:
+            - fields_grouping:
+                component: split-words
+                fields:
+                    - word
+
+    - bolt:
+        name: log-results
+        module: word_count.log_results
+        groupings:
+            - global_grouping: count-words
