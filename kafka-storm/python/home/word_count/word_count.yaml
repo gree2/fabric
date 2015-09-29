@@ -3,13 +3,8 @@
 name: word_count
 
 topology:
-
-    # - spout:
-    #     name: line-spout
-    #     module: word_count.line_spout
-
     - spout:
-        name: kafka-topic1-spout
+        name: kafka-spout
         type: kafka
         options:
             # The Kafka topic to stream from.
@@ -19,18 +14,18 @@ topology:
             # ZooKeeper connection string. Comma-separated list of ZooKeeper
             # servers.
             # Required.
-            zk_hosts: 192.168.1.251:2181,192.168.1.251:2181,192.168.1.251:2181
+            zk_hosts: 192.168.1.151:2181,192.168.1.152:2181,192.168.1.153:2181
 
             # Root path in ZooKeeper to store consumer offsets.
             # Defaults to: /pyleus-kafka-offsets/<topology name>
-            zk_root: /kafka-topic1-offset/kafka-spout/test
+            zk_root: /kafka-spout/word-count
 
             # Kafka consumer ID.
             # Defaults to: pyleus-<topology name>
 
             # IMPORTANT - ALWAYS CONFIRM KAFKA CONSUMER GROUP/ID
             #
-            consumer_id: kafka-topic1-spout
+            consumer_id: kafka-spout
 
             # Whether the initial offset should be that specified by
             # start_offset_time (true) or the head of the stream (false).
@@ -51,7 +46,7 @@ topology:
         parallelism_hint: 3
         groupings:
             # - shuffle_grouping: line-spout
-            - shuffle_grouping: kafka-topic1-spout
+            - shuffle_grouping: kafka-spout
 
     - bolt:
         name: count-words

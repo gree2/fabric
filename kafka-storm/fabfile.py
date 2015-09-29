@@ -36,20 +36,44 @@ def setw():
     sudo('chown node.node -R %s' % DEPLOY_HOME)
 
 def setc(option):
-    '''config kafka storm  => sete:1,3 setc:home/work'''
-    # 1. config kafka
+    '''config kafka storm  => fab sete:1,3 setc:home/work'''
+    # 1 config kafka
     with settings(host_string=env.host):
-        # copy config
+        # 1.1 config kafka
         config = '{0}/server{1}.properties'.format(option, str(env.host)[-1])
         file_i = os.path.join(CONF_HOME, 'kafka/{0}'.format(config))
         file_o = os.path.join(DEPLOY_HOME, 'kafka/config/', KAFKA_CFG)
         put(file_i, file_o)
+        # 1.2 kafka log dir
+        run('rm -rf {0}/kafka/'.format(APP_HOME))
+        run('mkdir -p {0}/kafka/log{1}'.format(APP_HOME, str(env.host)[-1]))
 
-    # 2. config storm
+    # 2.1 config storm
     config = 'storm/{0}/{1}'.format(option, STORM_CFG)
     file_i = os.path.join(CONF_HOME, config)
     file_o = os.path.join(DEPLOY_HOME, 'storm/conf/', STORM_CFG)
     put(file_i, file_o)
+
+    # 2.2 storm data dir
+    run('rm -rf {0}/storm/'.format(APP_HOME))
+    run('mkdir -p {0}/storm/'.format(APP_HOME))
+
+    # 3.1 config zookeeper
+    config = 'zookeeper/{0}/{1}'.format(option, ZOOKEEPER_CFG)
+    file_i = os.path.join(CONF_HOME, config)
+    file_o = os.path.join(DEPLOY_HOME, 'zookeeper/conf', ZOOKEEPER_CFG)
+    put(file_i, file_o)
+
+    # 3.2 zookeeper data dir
+    with settings(host_string=env.host):
+        run('rm -rf {0}/zookeeper/'.format(APP_HOME))
+        run('mkdir -p {0}/zookeeper/data/'.format(APP_HOME))
+        run('mkdir -p {0}/zookeeper/log/'.format(APP_HOME))
+        run('echo {0} > {1}/zookeeper/data/myid'.format(str(env.host)[-1], APP_HOME))
+
+def jps():
+    '''jps                 => fab sete:1,3 jps'''
+    run('jps')
 
 def zk0():
     """zookeeper uninstall => fab sete:1,3 zk0"""
@@ -85,6 +109,7 @@ def zk1():
     run('mkdir -p {0}'.format(file_i))
     with settings(host_string=env.host):
         run('mkdir -p {0}/zookeeper/data'.format(APP_HOME))
+        run('mkdir -p {0}/zookeeper/log'.format(APP_HOME))
         run('echo {0} > {1}/zookeeper/data/myid'.format(str(env.host)[-1], APP_HOME))
 
     # 6. clean up
@@ -137,21 +162,33 @@ def kf1():
     file_i = os.path.join(DEPLOY_HOME, KAFKA_PKG)
     run('rm {0}'.format(file_i))
 
-def kf2():
-    '''kafka service       => fab sete:1,1 kf2 sete:2,2 kf2 sete:3,3 kf2'''
-    # on node1-3
-    # $ env JMX_PORT=10002 bin/kafka-server-start.sh config/server.properties
-    # $ env JMX_PORT=10003 bin/kafka-server-start.sh config/server.properties
-    # $ env JMX_PORT=10004 bin/kafka-server-start.sh config/server.properties
-    if env.host == 'node1':
-        file_env = 'env JMX_PORT=10002'
-    elif env.host == 'node2':
-        file_env = 'env JMX_PORT=10003'
+def kf2(option):
+    '''kafka service       => fab sete:1,3 kf2:start/stop'''
+    if option == 'start':
+        with settings(host_string=env.host):
+            file_env = 'env JMX_PORT=1000{0}'.format(int(str(env.host)[-1]) + 1)
+            file_i1 = os.path.join(DEPLOY_HOME, 'kafka/bin/kafka-server-start.sh')
+            file_i2 = os.path.join(DEPLOY_HOME, 'kafka/config/server.properties')
+            cmd = 'nohup {} {} {} &> /dev/null &'.format(file_env, file_i1, file_i2)
+            run(cmd, pty=False)
     else:
-        file_env = 'env JMX_PORT=10004'
-    file_i1 = os.path.join(DEPLOY_HOME, 'kafka/bin/kafka-server-start.sh')
-    file_i2 = os.path.join(DEPLOY_HOME, 'kafka/config/server.properties')
-    cmd = 'nohup {} {} {} &> /dev/null &'.format(file_env, file_i1, file_i2)
+        # kill `jps | grep "Kafka" | cut -d " " -f 1`
+        run('kill -9 `jps | grep "Kafka" | cut -d " " -f 1`')
+        run('jps')
+
+def kf3(option):
+    '''kafka topic         => fab sete:1,1 kf3:create/list/describe'''
+    # bin/kafka-topics.sh --zookeeper 192.168.1.151:2181 --list
+    # bin/kafka-topics.sh --zookeeper 192.168.1.151:2181 --describe --topic topic1
+    file_i1 = os.path.join(DEPLOY_HOME, 'kafka/bin/kafka-topics.sh')
+    file_i2 = '--zookeeper 192.168.1.151:2181'
+    if option == 'create':
+        file_i3 = '--create --topic topic1 --partitions 3 --replication-factor 2'
+    elif option == 'describe':
+        file_i3 = '--describe --topic topic1'
+    else:
+        file_i3 = '--list'
+    cmd = '{} {} {}'.format(file_i1, file_i2, file_i3)
     run(cmd, pty=False)
 
 def st0():
@@ -177,8 +214,8 @@ def st1():
     file_o = os.path.join(DEPLOY_HOME, 'storm')
     run('mv {0} {1}'.format(file_i, file_o))
 
-    # 4. mkdir `log` and copy `cfg`
-    # mkdir log
+    # 4. mkdir `data` and copy `cfg`
+    # mkdir data
     run('mkdir -p {0}/storm/'.format(APP_HOME))
     # copy cfg
     file_i = os.path.join(CONF_HOME, 'storm/storm.yaml')
@@ -190,15 +227,28 @@ def st1():
     run('rm {0}'.format(file_i))
 
 def st2(option):
-    '''storm nimbus        => fab sete:1,1 st2:nimbus sete:1,3 st2:supervisor sete:1,1 st2:ui'''
-    # on node1/node1-3/node1
-    # $ bin/storm nimbus     >/dev/null 2>&1 &
-    # $ bin/storm supervisor >/dev/null 2>&1 &
-    # $ bin/storm ui         >/dev/null 2>&1 &
+    '''storm service       => fab sete:1,3 st2:start/stop'''
     file_i = os.path.join(DEPLOY_HOME, 'storm/bin/storm')
-    cmd = 'nohup {} {} &> /dev/null &'.format(file_i, option)
-    run(cmd, pty=False)
+    cmd = 'nohup {} {} &> /dev/null &'
+    if option == 'start':
+        # node1: nimbus+ui
+        if 'node1' == env.host:
+            run(cmd.format(file_i, 'nimbus'), pty=False)
+            run(cmd.format(file_i, 'ui'), pty=False)
+        # node1-3: supervisor
+        run(cmd.format(file_i, 'supervisor'), pty=False)
+    else:
+        # node1: nimbus+ui
+        if 'node1' == env.host:
+            run('kill -9 `jps | grep "core" | cut -d " " -f 1`')
+            run('kill -9 `jps | grep "nimbus" | cut -d " " -f 1`')
+        # node1-3: supervisor
+        run('kill -9 `jps | grep "supervisor" | cut -d " " -f 1`')
 
-def jps():
-    '''jps                 => fab sete:1,3 jps'''
-    run('jps')
+def sv0():
+    '''start all service   => fab sete:1,3 zk2:start kf2:start st2:start'''
+    pass
+
+def sv1():
+    '''stop  all service   => fab sete:1,3 st2:stop kf2:stop zk2:stop'''
+    pass

@@ -1,8 +1,7 @@
 #! coding: utf-8
 '''kafka-python usage'''
 
-# KAFKA_SERVER = '192.168.1.151:9092'
-KAFKA_SERVER = '10.13.186.251:9092'
+KAFKA_SERVER = '192.168.1.151:9092'
 
 def kafka_consumer():
     '''kafka consumer'''
