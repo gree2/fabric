@@ -1,15 +1,21 @@
+#! coding: utf-8
+'''write word count to redis/log'''
+
 import logging
+import redis
 
 from pyleus.storm import SimpleBolt
 
-log = logging.getLogger('log_results')
-
+RDS = redis.Redis('localhost')
+LOG = logging.getLogger('log_results')
 
 class LogResultsBolt(SimpleBolt):
+    '''write word count to redis/log'''
 
     def process_tuple(self, tup):
         word, count = tup.values
-        log.debug("%s: %d", word, count)
+        RDS.zadd('word_count', word, count)
+        LOG.debug("%s: %d", word, count)
 
 
 if __name__ == '__main__':
